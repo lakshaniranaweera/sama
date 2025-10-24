@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1080, height=1920, initial-scale=1.0">
+<title>Anlene Nutrient Match</title>
+<style>
+:root {
+  --tile-size: 175px;
+  --blink-speed: 1.5s; /* 🔹 Blink speed control */
+}
+
+/* ---------- BASE ---------- */
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 1080px;
+  height: 1920px;
+  overflow: hidden;
+  font-family: sans-serif;
+  background: #000;
+}
+
+.page {
+  width: 1080px;
+  height: 1920px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: none;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  background-size: cover;
+  background-position: center;
+}
+
+.active { display: flex; }
+
+/* ---------- PAGE BACKGROUNDS ---------- */
+#page1 { background: url("first1.png") no-repeat center center / cover; }
+#page2 { background: url("back1.png") no-repeat center center / cover; }
+#page3 { background: url("win1.png") no-repeat center center / cover; }
+#page4 { background: url("try1.png") no-repeat center center / cover; }
+
+/* ---------- CENTER BLINK IMAGE ---------- */
+.center-img {
+  position: absolute;
+  width: 800px; /* 🔹 Control image size */
+  height: auto;
+  animation: blink var(--blink-speed) infinite ease-in-out;
+  z-index: 10;
+}
+.center-img.pos-center { top: 28%; left: 17%; transform: translate(-50%, -50%); }
+.center-img.pos-top    { top: 30px; left: 50%; transform: translateX(-50%); }
+.center-img.pos-bottom { bottom: 0px; left: 50%; transform: translateX(-50%); }
+.center-img.pos-left   { top: 50%; left: 100px; transform: translateY(-50%); }
+.center-img.pos-right  { top: 50%; right: 100px; transform: translateY(-50%); }
+
+@keyframes blink {
+  0%, 100% { opacity: 0.3; transform: scale(0.95); }
+  50% { opacity: 1; transform: scale(1.1); }
+}
+
+/* ---------- SCORE & TIMER ---------- */
+#score, #timer {
+  position: absolute;
+  top: 430px;
+  font-size: 42px;
+  font-weight: bold;
+  color: #fff;
+  padding: 12px 30px;
+  border-radius: 15px;
+  background: rgba(26,203,70,0.6);
+  box-shadow: 0 0 15px rgba(255,255,255,0.5);
+  z-index: 10;
+}
+#score { left: 60px; }
+#timer { right: 60px; }
+
+/* ---------- GAME GRID ---------- */
+#game {
+  display: grid;
+  grid-template-columns: repeat(5, var(--tile-size));
+  grid-template-rows: repeat(5, var(--tile-size));
+  gap: 16px;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  top: 60px;
+}
+
+/* ---------- TILE STYLE ---------- */
+.tile {
+  width: var(--tile-size);
+  height: var(--tile-size);
+  border-radius: 30px;
+  cursor: pointer;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+  border: 6px solid #4b7c0c;
+  box-shadow:
+    inset 3px 3px 6px rgba(255,255,255,0.3),
+    inset -3px -3px 8px rgba(0,0,0,0.4),
+    0 8px 12px rgba(0,0,0,0.6);
+  animation: floatTile 3s ease-in-out infinite, bling 2.5s ease-in-out infinite;
+  animation-delay: calc(var(--i) * 0.1s);
+}
+
+@keyframes floatTile {
+  0% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-8px) scale(1.03); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+@keyframes bling {
+  0%   { filter: brightness(1); transform: scale(1); }
+  50%  { filter: brightness(1.25); transform: scale(1.07); }
+  100% { filter: brightness(1); transform: scale(1); }
+}
+
+@keyframes popIn {
+  0% { transform: scale(0); opacity: 0; }
+  60% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+.tile.pop {
+  animation: popIn 0.4s ease forwards, bling 2.5s ease-in-out infinite;
+  animation-delay: calc(var(--i) * 0.05s);
+}
+
+.tile:active { transform: scale(0.97); }
+
+.selected {
+  transform: scale(1.08);
+  border: 4px solid #00ff7f;
+  box-shadow:
+    0 0 25px rgba(0,255,0,0.9),
+    inset 4px 4px 6px rgba(255,255,255,0.3),
+    inset -4px -4px 8px rgba(0,0,0,0.5);
+}
+
+/* ---------- FLASH LINE ---------- */
+.swap-flash {
+  position: absolute;
+  background: linear-gradient(90deg, rgba(255,255,255,0), rgba(0,255,0,0.9), rgba(255,255,255,0));
+  box-shadow: 0 0 50px 25px rgba(0,255,0,0.7);
+  opacity: 0;
+  pointer-events: none;
+  filter: blur(3px);
+  animation: flashSwap 0.6s ease-out forwards;
+  border-radius: 50px;
+  z-index: 5;
+}
+@keyframes flashSwap {
+  0% { opacity: 0; transform: scale(0.4); }
+  30% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.2); }
+}
+
+/* ---------- SPARK STARS ---------- */
+.flash-star {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  background: url('star.png') no-repeat center / contain;
+  opacity: 0;
+  animation: sparkle 0.6s ease-out forwards;
+}
+@keyframes sparkle {
+  0% { transform: scale(0); opacity: 0; }
+  30% { transform: scale(1.4); opacity: 1; }
+  100% { transform: scale(0.2); opacity: 0; }
+}
+
+/* ---------- WIN PAGE FLOATING STARS ---------- */
+.win-star {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  background: url('star.png') no-repeat center / contain;
+  opacity: 0.8;
+  animation: blinkStar 2s infinite ease-in-out;
+  z-index: 2;
+}
+
+@keyframes blinkStar {
+  0%, 100% { opacity: 0.3; transform: scale(0.9) rotate(0deg); }
+  50% { opacity: 1; transform: scale(1.3) rotate(15deg); }
+}
+
+/* ---------- WIN/TRY ---------- */
+#page3 h1, #page4 h1 {
+  font-size: 80px;
+  text-shadow: 4px 4px 10px #000;
+  color: white;
+}
+</style>
+</head>
+<body>
+
+<!-- PAGES -->
+<div id="page1" class="page active">
+  <img src="center1.png" class="center-img pos-center" alt="Start Icon">
+</div>
+
+<div id="page2" class="page">
+  <div id="score">Score: 0</div>
+  <div id="timer">Time: 30</div>
+  <div id="game"></div>
+</div>
+
+<div id="page3" class="page">
+  <!-- <h1>YOU WIN!</h1>
+  <img src="win-center.png" class="center-img pos-center" alt="Winner Icon"> -->
+</div>
+
+<div id="page4" class="page">
+ <!-- <h1>TRY AGAIN!</h1> -->
+  <!-- <img src="center1.png" class="center-img pos-center" alt="Try Again Icon">  -->
+</div>
+
+<!-- SOUNDS -->
+<audio id="bgSound" src="start.mp3" loop></audio>
+<audio id="dragSound" src="drag1.mp3"></audio>
+<audio id="flashSound" src="flash.mp3"></audio>
+<audio id="winSound" src="winner.mp3"></audio>
+<audio id="trySound" src="tryagain.mp3"></audio>
+
+<script>
+/* ---------- SOUND ---------- */
+const bgSound=document.getElementById('bgSound');
+const dragSound=document.getElementById('dragSound');
+const flashSound=document.getElementById('flashSound');
+const winSound=document.getElementById('winSound');
+const trySound=document.getElementById('trySound');
+
+function playSound(s){s.currentTime=0;s.play().catch(()=>{});}
+function stopAllSounds(){[bgSound,dragSound,flashSound,winSound,trySound].forEach(s=>{s.pause();s.currentTime=0;});}
+
+/* ---------- PAGE HANDLING ---------- */
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const page=document.getElementById(id);
+  page.classList.add('active');
+  if(id==='page3'){createWinStars(page);} else {removeWinStars();}
+}
+
+/* ---------- WIN STARS ---------- */
+function createWinStars(container){
+  removeWinStars();
+  for(let i=0;i<20;i++){
+    const star=document.createElement('div');
+    star.className='win-star';
+    star.style.left=Math.random()*1000+'px';
+    star.style.top=Math.random()*1800+'px';
+    star.style.animationDelay=(Math.random()*2)+'s';
+    container.appendChild(star);
+  }
+}
+function removeWinStars(){
+  document.querySelectorAll('.win-star').forEach(s=>s.remove());
+}
+
+/* ---------- GAME LOGIC ---------- */
+window.addEventListener('load',()=>playSound(bgSound));
+document.getElementById('page1').addEventListener('click',()=>{ showPage('page2'); startGame(); });
+
+const nutrients=['32.png','31.png','30.png','33.png'];
+const gridSize=5;
+const game=document.getElementById('game');
+let tiles=[],score=0,timeLeft=30,gameActive=true,firstSelected=null;
+
+const GAME_DURATION=30;  // 🔹 Timer control
+const WIN_SCORE=60;      // 🔹 Win score control
+
+function startGame(){
+  game.innerHTML='';tiles=[];score=0;timeLeft=GAME_DURATION;gameActive=true;firstSelected=null;
+  document.getElementById('score').textContent='Score: 0';
+  document.getElementById('timer').textContent='Time: '+GAME_DURATION;
+  for(let i=0;i<gridSize*gridSize;i++){
+    const t=document.createElement('div');
+    t.classList.add('tile','pop');
+    t.style.setProperty('--i', i);
+    const img=nutrients[Math.floor(Math.random()*nutrients.length)];
+    t.style.backgroundImage=`url(${img})`;
+    t.dataset.index=i;
+    t.addEventListener('click',onTileClick);
+    t.addEventListener('touchstart',e=>{e.preventDefault();onTileClick.call(t,e);});
+    game.appendChild(t);
+    tiles.push(t);
+  }
+  startTimer();
+}
+
+function onTileClick(){
+  if(!gameActive)return;
+  if(!firstSelected){
+    firstSelected=this;
+    this.classList.add('selected');
+  }else if(firstSelected===this){
+    this.classList.remove('selected');
+    firstSelected=null;
+  }else{
+    const srcIndex=+firstSelected.dataset.index;
+    const targetIndex=+this.dataset.index;
+    const isAdjacent=
+      targetIndex===srcIndex-1&&srcIndex%gridSize!==0||
+      targetIndex===srcIndex+1&&targetIndex%gridSize!==4||
+      targetIndex===srcIndex-gridSize||
+      targetIndex===srcIndex+gridSize;
+    if(isAdjacent){
+      swapTiles(firstSelected,this);
+      playSound(dragSound);
+      if(!checkMatches(true))swapTiles(firstSelected,this);
+      else checkMatches(false,true);
+    }
+    firstSelected.classList.remove('selected');
+    firstSelected=null;
+  }
+}
+
+function swapTiles(a,b){
+  const temp=a.style.backgroundImage;
+  a.style.backgroundImage=b.style.backgroundImage;
+  b.style.backgroundImage=temp;
+}
+
+function checkMatches(simulate=false,addScore=false){
+  let matched=false;const matchedTiles=[];
+  for(let r=0;r<gridSize;r++){
+    for(let c=0;c<gridSize-2;c++){
+      const i=r*gridSize+c;
+      const i1=tiles[i].style.backgroundImage,i2=tiles[i+1].style.backgroundImage,i3=tiles[i+2].style.backgroundImage;
+      if(i1&&i1===i2&&i2===i3){matched=true;matchedTiles.push([i,i+1,i+2]);}
+    }
+  }
+  for(let c=0;c<gridSize;c++){
+    for(let r=0;r<gridSize-2;r++){
+      const i=r*gridSize+c;
+      const i1=tiles[i].style.backgroundImage,i2=tiles[i+gridSize].style.backgroundImage,i3=tiles[i+2*gridSize].style.backgroundImage;
+      if(i1&&i1===i2&&i2===i3){matched=true;matchedTiles.push([i,i+gridSize,i+2*gridSize]);}
+    }
+  }
+  if(simulate)return matched;
+  if(matched&&addScore){
+    matchedTiles.forEach(group=>{
+      group.forEach(i=>{tiles[i].style.backgroundImage='';});
+      score+=5;
+      document.getElementById('score').textContent='Score: '+score;
+      triggerFlashLine(tiles[group[0]],tiles[group[group.length-1]]);
+      playSound(flashSound);
+      spawnStars();
+    });
+    setTimeout(dropTiles,200);
+  }
+  return matched;
+}
+
+function dropTiles(){
+  for(let c=0;c<gridSize;c++){
+    let empty=0;
+    for(let r=gridSize-1;r>=0;r--){
+      const i=r*gridSize+c;
+      if(!tiles[i].style.backgroundImage)empty++;
+      else if(empty>0){
+        tiles[i+empty*gridSize].style.backgroundImage=tiles[i].style.backgroundImage;
+        tiles[i].style.backgroundImage='';
+      }
+    }
+    for(let r=0;r<empty;r++){
+      const i=r*gridSize+c;
+      const rand=nutrients[Math.floor(Math.random()*nutrients.length)];
+      tiles[i].style.backgroundImage=`url(${rand})`;
+    }
+  }
+}
+
+function triggerFlashLine(tileA,tileB){
+  const rectA=tileA.getBoundingClientRect();
+  const rectB=tileB.getBoundingClientRect();
+  const gameRect=game.getBoundingClientRect();
+  const line=document.createElement('div');
+  line.className='swap-flash';
+  const centerX=((rectA.left+rectB.left)/2-gameRect.left)+rectA.width/2;
+  const centerY=((rectA.top+rectB.top)/2-gameRect.top)+rectA.height/2;
+  const dx=rectB.left-rectA.left;
+  const dy=rectB.top-rectA.top;
+  const distance=Math.sqrt(dx*dx+dy*dy);
+  line.style.width=distance+rectA.width+'px';
+  line.style.height='16px';
+  line.style.left=(centerX-distance/2)+'px';
+  line.style.top=(centerY-8)+'px';
+  line.style.transformOrigin='center';
+  line.style.transform=`rotate(${Math.atan2(dy,dx)}rad)`;
+  game.appendChild(line);
+  setTimeout(()=>line.remove(),700);
+}
+
+function spawnStars(){
+  for(let i=0;i<5;i++){
+    const star=document.createElement('div');
+    star.className='flash-star';
+    star.style.left=(Math.random()*850)+'px';
+    star.style.top=(Math.random()*850)+'px';
+    game.appendChild(star);
+    setTimeout(()=>star.remove(),600);
+  }
+}
+
+function startTimer(){
+  const timerEl=document.getElementById('timer');
+  const interval=setInterval(()=>{
+    if(!gameActive){clearInterval(interval);return;}
+    timeLeft--;
+    timerEl.textContent='Time: '+timeLeft;
+    if(timeLeft<=0){
+      gameActive=false;
+      clearInterval(interval);
+      stopAllSounds();
+      if(score>=WIN_SCORE){
+        playSound(winSound);
+        showPage('page3');
+      }else{
+        playSound(trySound);
+        showPage('page4');
+      }
+      setTimeout(()=>{
+        stopAllSounds();
+        playSound(bgSound);
+        showPage('page1');
+      },5000);
+    }
+  },1000);
+}
+</script>
+</body>
+</html>
