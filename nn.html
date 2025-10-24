@@ -2,12 +2,12 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=1080, height=1920, initial-scale=1.0">
+<meta name="viewport" content="width=1080, height=1920, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Anlene Nutrient Match</title>
 <style>
 :root {
   --tile-size: 175px;
-  --blink-speed: 1.5s; /* 🔹 Blink speed control */
+  --blink-speed: 1.5s; /* Blink speed control */
 }
 
 /* ---------- BASE ---------- */
@@ -17,8 +17,11 @@ html, body {
   width: 1080px;
   height: 1920px;
   overflow: hidden;
-  font-family: sans-serif;
   background: #000;
+  font-family: sans-serif;
+  position: fixed;
+  top: 0;
+  left: 0;
 }
 
 .page {
@@ -32,30 +35,32 @@ html, body {
   align-items: center;
   flex-direction: column;
   background-size: cover;
-  background-position: center;
+  background-position: center center;
+  background-repeat: no-repeat;
 }
 
 .active { display: flex; }
 
 /* ---------- PAGE BACKGROUNDS ---------- */
-#page1 { background: url("first1.png") no-repeat center center / cover; }
-#page2 { background: url("back1.png") no-repeat center center / cover; }
-#page3 { background: url("win1.png") no-repeat center center / cover; }
-#page4 { background: url("try1.png") no-repeat center center / cover; }
+#page1 { background-image: url("first1.png"); }
+#page2 { background-image: url("back1.png"); }
+#page3 { background-image: url("win1.png"); }
+#page4 { background-image: url("try1.png"); }
 
 /* ---------- CENTER BLINK IMAGE ---------- */
 .center-img {
   position: absolute;
-  width: 800px; /* 🔹 Control image size */
+  width: 800px;
+  max-width: 90%;
   height: auto;
   animation: blink var(--blink-speed) infinite ease-in-out;
   z-index: 10;
 }
-.center-img.pos-center { top: 28%; left: 17%; transform: translate(-50%, -50%); }
-.center-img.pos-top    { top: 30px; left: 50%; transform: translateX(-50%); }
-.center-img.pos-bottom { bottom: 0px; left: 50%; transform: translateX(-50%); }
-.center-img.pos-left   { top: 50%; left: 100px; transform: translateY(-50%); }
-.center-img.pos-right  { top: 50%; right: 100px; transform: translateY(-50%); }
+.center-img.pos-center { top: 50%; left: 50%; transform: translate(-50%, -50%); }
+.center-img.pos-top    { top: 60px; left: 50%; transform: translateX(-50%); }
+.center-img.pos-bottom { bottom: 60px; left: 50%; transform: translateX(-50%); }
+.center-img.pos-left   { top: 50%; left: 120px; transform: translateY(-50%); }
+.center-img.pos-right  { top: 50%; right: 120px; transform: translateY(-50%); }
 
 @keyframes blink {
   0%, 100% { opacity: 0.3; transform: scale(0.95); }
@@ -65,7 +70,7 @@ html, body {
 /* ---------- SCORE & TIMER ---------- */
 #score, #timer {
   position: absolute;
-  top: 430px;
+  top: 420px;
   font-size: 42px;
   font-weight: bold;
   color: #fff;
@@ -87,7 +92,7 @@ html, body {
   justify-content: center;
   align-items: center;
   position: relative;
-  top: 60px;
+  top: 100px;
 }
 
 /* ---------- TILE STYLE ---------- */
@@ -187,7 +192,6 @@ html, body {
   animation: blinkStar 2s infinite ease-in-out;
   z-index: 2;
 }
-
 @keyframes blinkStar {
   0%, 100% { opacity: 0.3; transform: scale(0.9) rotate(0deg); }
   50% { opacity: 1; transform: scale(1.3) rotate(15deg); }
@@ -198,12 +202,13 @@ html, body {
   font-size: 80px;
   text-shadow: 4px 4px 10px #000;
   color: white;
+  text-align: center;
 }
 </style>
 </head>
 <body>
 
-<!-- PAGES -->
+<!-- ---------- PAGES ---------- -->
 <div id="page1" class="page active">
   <img src="center1.png" class="center-img pos-center" alt="Start Icon">
 </div>
@@ -215,16 +220,12 @@ html, body {
 </div>
 
 <div id="page3" class="page">
-  <!-- <h1>YOU WIN!</h1>
-  <img src="win-center.png" class="center-img pos-center" alt="Winner Icon"> -->
 </div>
 
 <div id="page4" class="page">
- <!-- <h1>TRY AGAIN!</h1> -->
-  <!-- <img src="center1.png" class="center-img pos-center" alt="Try Again Icon">  -->
 </div>
 
-<!-- SOUNDS -->
+<!-- ---------- SOUNDS ---------- -->
 <audio id="bgSound" src="start.mp3" loop></audio>
 <audio id="dragSound" src="drag1.mp3"></audio>
 <audio id="flashSound" src="flash.mp3"></audio>
@@ -275,8 +276,8 @@ const gridSize=5;
 const game=document.getElementById('game');
 let tiles=[],score=0,timeLeft=30,gameActive=true,firstSelected=null;
 
-const GAME_DURATION=30;  // 🔹 Timer control
-const WIN_SCORE=60;      // 🔹 Win score control
+const GAME_DURATION=30;  // Timer control
+const WIN_SCORE=60;      // Win score control
 
 function startGame(){
   game.innerHTML='';tiles=[];score=0;timeLeft=GAME_DURATION;gameActive=true;firstSelected=null;
